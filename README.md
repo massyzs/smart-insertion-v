@@ -16,9 +16,6 @@ as a vision-language guidance encoder next to the T5 text encoder.
 | Stage-1 (pre-training) checkpoint | [https://huggingface.co/Massyzs/smart-insertion-v-stage1](https://huggingface.co/Massyzs/smart-insertion-v-stage1) |
 | Smart-Insertion-V dataset | [https://huggingface.co/datasets/Massyzs/smart-insertion-v-dataset](https://huggingface.co/datasets/Massyzs/smart-insertion-v-dataset) |
 
-Both Hugging Face repositories are gated: request access on the repository page, then log in with
-`hf auth login` (or set `HF_TOKEN`) before downloading.
-
 **Release policy.** Due to policy restrictions, the fine-tuned (stage-2) model is not released. Instead, we
 release the stage-1 pre-training checkpoint, which is the most compute-intensive part of training,
 together with the full training code and the Smart-Insertion-V dataset. Starting from the stage-1 checkpoint,
