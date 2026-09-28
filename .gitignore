@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+/build/
+/dist/
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# Runs and outputs
+*.log
+samples/
+output*/
+checkpoint*/
+wandb/
+runs/
+
+# OS
+.DS_Store

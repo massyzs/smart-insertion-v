@@ -1,0 +1,29 @@
+torch>=2.1.2
+torchvision
+diffusers>=0.30.1
+transformers>=4.57.0
+accelerate>=1.0.0
+einops
+safetensors
+omegaconf
+Pillow
+numpy
+opencv-python
+decord
+func_timeout
+imageio[ffmpeg]
+scipy
+datasets
+tensorboard
+sentencepiece
+tqdm
+
+# Optional
+# wandb            # experiment tracking (--report_to wandb)
+# bitsandbytes     # 8-bit AdamW in pretrain.py (--use_8bit_adam)
+# torchao          # 8-bit AdamW in finetune.py (--use_8bit_adam)
+# came-pytorch     # CAME optimizer (--use_came)
+# flash-attn       # faster attention kernels
+# sageattention    # alternative attention backend (videox_fun/models/attention_utils.py)
+# xfuser           # sequence-parallel multi-GPU inference
+# pandas openpyxl  # only for the optional Excel timing helper in videox_fun/utils/utils.py
