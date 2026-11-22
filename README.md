@@ -16,9 +16,10 @@ as a vision-language guidance encoder next to the T5 text encoder.
 | Stage-1 (pre-training) checkpoint | [https://huggingface.co/Massyzs/smart-insertion-v-stage1](https://huggingface.co/Massyzs/smart-insertion-v-stage1) |
 | Smart-Insertion-V dataset | [https://huggingface.co/datasets/Massyzs/smart-insertion-v-dataset](https://huggingface.co/datasets/Massyzs/smart-insertion-v-dataset) |
 
-**Release policy.** Due to policy restrictions, the fine-tuned (stage-2) model is not released. Instead, we
-release the stage-1 pre-training checkpoint, which is the most compute-intensive part of training,
-together with the full training code and the Smart-Insertion-V dataset. Starting from the stage-1 checkpoint,
+**Release policy.** Due to policy restrictions, the fine-tuned (stage-2) model used in the paper is not released.
+A stage-2 model trained on data quadruplets (`input_video`, `gt_video`, `ref_img`, `gt_ref_img`) built from the
+public Smart-Insertion-V dataset will be released. We also release the stage-1 pre-training checkpoint, which is
+the most compute-intensive part of training, together with the full training code and the Smart-Insertion-V dataset. Starting from the stage-1 checkpoint,
 you can reproduce the fine-tuned model by running stage 2 on the released dataset.
 
 ## Getting started
@@ -160,7 +161,8 @@ files with `file_path` (absolute path), `text` and `dense_text`; the format is d
 
 ### Stage 2: insertion fine-tuning
 
-The fine-tuned model is not released, so this step is required before inference.
+The fine-tuned model used in the paper is not released. Until the stage-2 model trained on the public dataset is
+released (see [Release policy](#released-resources)), this step is required before inference.
 `scripts/wan2.1/finetune.sh` fine-tunes the whole transformer on the Smart-Insertion-V dataset, starting
 from the stage-1 checkpoint. Set `MODEL_NAME` to the absolute path of the `Wan2.1-T2V-14B-stage1` directory,
 list the dataset index folders in `INSERT_DATASET_JSON_FOLDER` and point `INSERTION_CACHE` at the
@@ -201,7 +203,8 @@ Logs are written to `<OUTPUT>/logs/`.
 
 ## Inference
 
-Inference needs a stage-2 checkpoint that you train with `finetune.sh` (see [Release policy](#released-resources)).
+Inference needs a stage-2 checkpoint: one that you train with `finetune.sh` or `finetune_fast.sh`, or the stage-2
+model trained on the public dataset once it is released (see [Release policy](#released-resources)).
 The stage-1 checkpoint loads without error but is not trained for insertion.
 
 `scripts/wan2.1/inference.py` runs the closed-loop feedback inference. During denoising, the image stream's
