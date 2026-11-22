@@ -683,8 +683,12 @@ class MLLMInContext(PreTrainedModel):
 
     def encode_condition(
         self, input_ids, attention_mask, pixel_values, image_grid_thw, pixel_values_videos, video_grid_thw, second_per_grid_ts,mode,
+        mm_token_type_ids=None,
     ):
         if self.mllm_type == "qwenvl":
+            # Newer transformers releases need the processor's modality mask (text / image / video per token)
+            # to build the multimodal RoPE position ids and raise without it; older processors do not return it.
+            mm_kwargs = {} if mm_token_type_ids is None else {"mm_token_type_ids": mm_token_type_ids}
             outputs = self.mllm_backbone(
                 input_ids=input_ids,
                 pixel_values=pixel_values,
@@ -694,7 +698,8 @@ class MLLMInContext(PreTrainedModel):
                 pixel_values_videos=pixel_values_videos,
                 video_grid_thw=video_grid_thw,
                 second_per_grid_ts=second_per_grid_ts,
-                mode=mode
+                mode=mode,
+                **mm_kwargs,
             )
             last_hidden = outputs.hidden_states[-1]  # Last layer hidden states
             # print(f"[MLLM] QwenVL hidden states shape: {last_hidden.shape}")
@@ -832,6 +837,7 @@ class MLLMInContext(PreTrainedModel):
             video_grid_thw=inputs.get("video_grid_thw"),
             second_per_grid_ts=inputs.get("second_per_grid_ts"),
             mode=mode,
+            mm_token_type_ids=inputs.get("mm_token_type_ids"),
         )
 
         if mode == "ref_edit":

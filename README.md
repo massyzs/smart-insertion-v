@@ -26,7 +26,8 @@ you can reproduce the fine-tuned model by running stage 2 on the released datase
 1. [Install](#installation) the environment.
 2. [Download](#model-weights) the base models and the stage-1 checkpoint.
 3. [Download](#dataset) the dataset and build the frame-count cache.
-4. [Train stage 2](#stage-2-insertion-fine-tuning) with `scripts/wan2.1/finetune.sh`.
+4. [Train stage 2](#stage-2-insertion-fine-tuning) with `scripts/wan2.1/finetune.sh`, or with the faster trainer
+   `scripts/wan2.1/finetune_fast.sh` ([details](#stage-2-with-the-faster-trainer)).
 5. [Run inference](#inference) with the closed-loop feedback script `scripts/wan2.1/inference.py`.
 
 All commands below are run from the repository root, and models and data are downloaded there.
@@ -37,9 +38,13 @@ All commands below are run from the repository root, and models and data are dow
 | --- | --- |
 | `scripts/wan2.1/pretrain.sh`, `pretrain.py` | Stage 1: connects Qwen3-VL to Wan2.1-T2V-14B |
 | `scripts/wan2.1/finetune.sh`, `finetune.py` | Stage 2: end-to-end insertion fine-tuning |
+| `scripts/wan2.1/finetune_fast.sh`, `finetune_fast.py` | Stage 2 with the faster trainer (also uses the image subset, node-local checkpoints) |
 | `scripts/wan2.1/inference.py` | Closed-loop feedback inference on your own videos and reference images |
 | `scripts/wan2.1/qwen_encoder.py` | Qwen3-VL guidance encoder |
 | `scripts/wan2.1/probe_video_lengths.py` | Builds the frame-count cache required by stage 2 |
+| `scripts/wan2.1/infer_trainset.py` | Inference on a list of samples, for example from the training index, one process per GPU |
+| `videox_fun/data/dataset_insertion_fast.py` | Dataset and step sampler of the faster trainer |
+| `videox_fun/models/wan_transformer3d_insertion_fast.py` | Faster, numerically equivalent copy of the stage-2 transformer file |
 | `videox_fun/` | Models, pipelines, datasets and utilities |
 | `config/wan2.1/wan_civitai.yaml` | Model config shared by all scripts |
 
@@ -117,6 +122,10 @@ python scripts/wan2.1/probe_video_lengths.py \
     --output insertion_cache.json
 ```
 
+The faster trainer (`scripts/wan2.1/finetune_fast.sh`) also trains on `image/`, as single-frame samples.
+Download it with `--include "image/*"`, extract it like the video subsets and move its index to `image/info/`
+in the same way. The frame-count cache covers the video subsets only.
+
 ## Training
 
 Both launch scripts use FSDP through `accelerate`. The example configuration is 2 nodes with 8 GPUs each.
@@ -157,6 +166,38 @@ from the stage-1 checkpoint. Set `MODEL_NAME` to the absolute path of the `Wan2.
 list the dataset index folders in `INSERT_DATASET_JSON_FOLDER` and point `INSERTION_CACHE` at the
 frame-count cache.
 Checkpoints are written to `<OUTPUT>/checkpoint-N/`.
+
+### Stage 2 with the faster trainer
+
+`scripts/wan2.1/finetune_fast.sh` runs `finetune_fast.py`. It keeps the recipe of `finetune.sh` (initialization,
+optimizer, learning rate, gradient clipping, resolution and frame count) and changes how the steps are run:
+
+- Data: the `image/` subset is used as well, as single-frame samples. Every global step holds samples of one
+  kind (all clips or all single-frame images). The sample order is a fixed function of the seed and the epoch,
+  so a resumed run continues at the exact data position. Clips are decoded in dataloader workers.
+- Encoders: the frozen Qwen3-VL and T5 keep their weights on the GPU or in pinned host memory
+  (`QWEN_PLACEMENT`, `T5_PLACEMENT`) instead of being moved between CPU and GPU in every step.
+- Checkpoints: every rank writes its own file to `<OUTPUT>/checkpoint-N/` (model shards, optimizer state,
+  RNG states), so `OUTPUT` can be node-local. A restart resumes from the newest checkpoint that is complete on
+  every node. Node 0 also writes the consolidated weights, `diffusion_pytorch_model.safetensors` with
+  `config.json`, which inference loads directly.
+- Control files in `OUTPUT`, on any node: `touch STOP` saves and ends the run (start the script again to
+  continue); `touch SAVE_NOW` writes an extra checkpoint while training continues.
+- Speed: `FAST_MODEL=1` (the default) uses `videox_fun/models/wan_transformer3d_insertion_fast.py`, a copy of the
+  model file with the same parameters and maths and fewer elementwise passes per block (about 15% less time in
+  the transformer blocks; the results differ from the original file at the bf16 rounding level). `USE_FA3=1`
+  uses FlashAttention-3, which has to be built from source; set `FA3_SITE` to the directory that holds
+  `flash_attn_interface.py`.
+
+Replace the `PATH/...` placeholders and set `NUM_NODES` and `GPUS_PER_NODE` in the script, then start it on
+every node, node 0 first:
+
+```bash
+MASTER_ADDR=<ip-of-node-0> bash scripts/wan2.1/finetune_fast.sh 0   # node 0
+MASTER_ADDR=<ip-of-node-0> bash scripts/wan2.1/finetune_fast.sh 1   # node 1
+```
+
+Logs are written to `<OUTPUT>/logs/`.
 
 ## Inference
 

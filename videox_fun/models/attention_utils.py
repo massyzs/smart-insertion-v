@@ -112,6 +112,8 @@ def flash_attention(
     # apply attention
     if (version is None or version == 3) and FLASH_ATTN_3_AVAILABLE:
         # Note: dropout_p, window_size are not supported in FA3 now.
+        # Early FA3 releases returned (out, softmax_lse); current ones return the output tensor itself
+        # (indexing that with [0] would silently take the first token row), so both are accepted.
         x = flash_attn_interface.flash_attn_varlen_func(
             q=q,
             k=k,
@@ -126,7 +128,10 @@ def flash_attention(
             max_seqlen_k=lk,
             softmax_scale=softmax_scale,
             causal=causal,
-            deterministic=deterministic)[0].unflatten(0, (b, lq))
+            deterministic=deterministic)
+        if isinstance(x, (tuple, list)):
+            x = x[0]
+        x = x.unflatten(0, (b, lq))
     else:
         assert FLASH_ATTN_2_AVAILABLE
         x = flash_attn.flash_attn_varlen_func(
