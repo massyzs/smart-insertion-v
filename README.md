@@ -15,11 +15,11 @@ as a vision-language guidance encoder next to the T5 text encoder.
 | --- | --- |
 | Stage-1 (pre-training) checkpoint | [https://huggingface.co/Massyzs/smart-insertion-v-stage1](https://huggingface.co/Massyzs/smart-insertion-v-stage1) |
 | Smart-Insertion-V dataset | [https://huggingface.co/datasets/Massyzs/smart-insertion-v-dataset](https://huggingface.co/datasets/Massyzs/smart-insertion-v-dataset) |
-| Stage-2 checkpoint, one epoch on the public dataset (uploaded when its training finishes) | [https://huggingface.co/Massyzs/smart-insertion-v-stage2](https://huggingface.co/Massyzs/smart-insertion-v-stage2) |
+| Stage-2 checkpoint, one epoch on the public dataset (uploaded when its training finishes) | [https://huggingface.co/Massyzs/smart-insertion-v-stage2-open](https://huggingface.co/Massyzs/smart-insertion-v-stage2-open) |
 
 **Release policy.** Due to policy restrictions, the fine-tuned (stage-2) model used in the paper is not released.
 A stage-2 model trained on data quadruplets (`input_video`, `gt_video`, `ref_img`, `gt_ref_img`) built from the
-public Smart-Insertion-V dataset will be released at [Massyzs/smart-insertion-v-stage2](https://huggingface.co/Massyzs/smart-insertion-v-stage2) when its one-epoch training finishes. We also release the stage-1 pre-training checkpoint, which is
+public Smart-Insertion-V dataset will be released at [Massyzs/smart-insertion-v-stage2-open](https://huggingface.co/Massyzs/smart-insertion-v-stage2-open) when its one-epoch training finishes. We also release the stage-1 pre-training checkpoint, which is
 the most compute-intensive part of training, together with the full training code and the Smart-Insertion-V dataset. Starting from the stage-1 checkpoint,
 you can reproduce the fine-tuned model by running stage 2 on the released dataset.
 
@@ -205,7 +205,7 @@ Logs are written to `<OUTPUT>/logs/`.
 ## Inference
 
 Inference needs a stage-2 checkpoint: one that you train with `finetune.sh` or `finetune_fast.sh`, or the stage-2
-model trained on the public dataset once it is released at [Massyzs/smart-insertion-v-stage2](https://huggingface.co/Massyzs/smart-insertion-v-stage2) (see [Release policy](#released-resources)).
+model trained on the public dataset once it is released at [Massyzs/smart-insertion-v-stage2-open](https://huggingface.co/Massyzs/smart-insertion-v-stage2-open) (see [Release policy](#released-resources)).
 The stage-1 checkpoint loads without error but is not trained for insertion.
 
 `scripts/wan2.1/inference.py` runs the closed-loop feedback inference. During denoising, the image stream's
